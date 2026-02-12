@@ -49,7 +49,7 @@ interface PaginatedUsers {
 }
 
 function formatCredits(value: number): string {
-  return (value / 100).toLocaleString() + ' credits'
+  return value.toLocaleString() + ' credits'
 }
 
 export default function UsersPage() {
@@ -92,7 +92,7 @@ export default function UsersPage() {
     setAdjustError('')
 
     try {
-      const amount = Math.round(parseFloat(adjustAmount) * 100) // Convert to cents
+      const amount = Math.round(parseFloat(adjustAmount))
       await adminPost(`/api/v1/users/${selectedUser.id}/balance`, { amount })
       setSelectedUser(null)
       setAdjustAmount('')

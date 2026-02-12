@@ -1,0 +1,119 @@
+---
+title: API Overview
+description: Authentication, response format, and conventions
+---
+
+## Two APIs
+
+Poly-Predict exposes two separate APIs:
+
+| API       | Base URL                  | Auth Method        | Purpose              |
+| --------- | ------------------------- | ------------------ | -------------------- |
+| **User**  | `http://localhost:8080`   | Supabase JWT       | Events, bets, profile, rankings |
+| **Admin** | `http://localhost:8081`   | Custom JWT + bcrypt| User/event management, settlements |
+
+## Authentication
+
+### User API
+
+The User API uses **Supabase JWT** tokens. Include the token in the `Authorization` header:
+
+<CodeGroup>
+```bash curl
+curl http://localhost:8080/api/v1/users/me \
+  -H "Authorization: Bearer <supabase-jwt-token>"
+```
+
+```javascript JavaScript
+const res = await fetch("http://localhost:8080/api/v1/users/me", {
+  headers: {
+    Authorization: `Bearer ${session.access_token}`,
+  },
+});
+```
+
+```go Go
+req, _ := http.NewRequest("GET", "http://localhost:8080/api/v1/users/me", nil)
+req.Header.Set("Authorization", "Bearer "+token)
+```
+</CodeGroup>
+
+Public endpoints (events listing, rankings) do not require authentication.
+
+### Admin API
+
+The Admin API uses **custom JWT** tokens obtained via the login endpoint:
+
+```bash
+curl -X POST http://localhost:8081/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "your-password"}'
+```
+
+The response includes a `token` field. Use it in subsequent requests:
+
+```bash
+curl http://localhost:8081/api/v1/dashboard \
+  -H "Authorization: Bearer <admin-jwt-token>"
+```
+
+## Response Format
+
+### Success Responses
+
+Single resources are returned directly:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "question": "Will BTC reach $100k?",
+  "status": "open",
+  ...
+}
+```
+
+Paginated lists use the envelope:
+
+```json
+{
+  "data": [...],
+  "pagination": {
+    "total": 42,
+    "page": 1,
+    "page_size": 20,
+    "pages": 3
+  }
+}
+```
+
+### Error Responses
+
+All errors return:
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Description of what went wrong"
+  }
+}
+```
+
+Common HTTP status codes:
+
+| Code | Meaning                |
+| ---- | ---------------------- |
+| 400  | Bad request / invalid parameters |
+| 401  | Missing or invalid auth token |
+| 403  | Insufficient permissions (admin) |
+| 404  | Resource not found     |
+| 422  | Validation error (e.g., insufficient balance) |
+
+## Pagination
+
+All list endpoints support pagination via query parameters:
+
+| Parameter   | Default | Range   | Description          |
+| ----------- | ------- | ------- | -------------------- |
+| `page`      | 1       | 1+      | Page number          |
+| `page_size` | 20      | 1–100   | Items per page       |

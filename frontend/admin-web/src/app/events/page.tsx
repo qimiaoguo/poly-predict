@@ -61,7 +61,7 @@ interface PaginatedEvents {
 }
 
 function formatCredits(value: number): string {
-  return (value / 100).toLocaleString() + ' credits'
+  return value.toLocaleString() + ' credits'
 }
 
 function statusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -274,23 +274,17 @@ export default function EventsPage() {
           if (!open) setSelectedEvent(null)
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Event Details</DialogTitle>
-            <DialogDescription>{selectedEvent?.id}</DialogDescription>
+            <DialogDescription className="truncate">{selectedEvent?.id}</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-sm overflow-y-auto flex-1">
             <div>
               <span className="font-medium">Question:</span>
               <p className="mt-1">{selectedEvent?.question}</p>
             </div>
-            {selectedEvent?.description && (
-              <div>
-                <span className="font-medium">Description:</span>
-                <p className="mt-1 text-muted-foreground">{selectedEvent.description}</p>
-              </div>
-            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <span className="text-muted-foreground">Category</span>
@@ -298,11 +292,11 @@ export default function EventsPage() {
               </div>
               <div>
                 <span className="text-muted-foreground">Status</span>
-                <p>
+                <span className="block">
                   <Badge variant={statusBadgeVariant(selectedEvent?.status ?? '')}>
                     {selectedEvent?.status}
                   </Badge>
-                </p>
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">Yes Price</span>
@@ -333,13 +327,14 @@ export default function EventsPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={() => setSelectedEvent(null)}>
               Close
             </Button>
             {selectedEvent?.status !== 'resolved' && (
               <Button
-                variant="destructive"
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive hover:text-white"
                 onClick={() => setShowSettleDialog(true)}
               >
                 Force Settle
@@ -401,7 +396,8 @@ export default function EventsPage() {
               Cancel
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-white disabled:opacity-50"
               onClick={handleSettle}
               disabled={!settleOutcome || settleLoading}
             >

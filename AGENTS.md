@@ -50,15 +50,31 @@ make gen-admin-client   # TypeScript client for admin-web
 
 ## API Spec (Single Source of Truth)
 
-OpenAPI specs in `shared/api-spec.yaml` and `shared/admin-spec.yaml` are the **single source of truth** for all API contracts.
+OpenAPI specs in `docs/api-reference/user-api.yaml` and `docs/api-reference/admin-api.yaml` are the **single source of truth** for all API contracts.
 
-- **Before** changing any endpoint, request/response fields, or route paths, **update the spec first**
+- **Before** changing any endpoint, request/response fields, or route paths, **read the spec first**
+- Before writing frontend API calls, **verify field names, query param names, and HTTP methods** against the spec
 - Backend routes and response structures **must match** the spec exactly
 - Frontend API calls and types **must match** the spec exactly
 - When spec and code disagree, fix the code (or propose a spec change first)
 
+## Documentation (`docs/`)
+
+Mintlify docs live in `docs/`. OpenAPI specs live at `docs/api-reference/user-api.yaml` and `docs/api-reference/admin-api.yaml` — these are the canonical copies used by code generation, frontend clients, and Mintlify.
+
+- When **adding/removing API endpoints**, update both the spec file and navigation entries in `docs/mint.json`
+- When **changing features or flows** (betting, settlement, rankings, admin), update the relevant guide in `docs/guides/`
+- When **changing architecture** (new service, DB schema change, new cron job), update `docs/architecture.mdx`
+- Preview locally: `make dev-docs` (starts Mintlify at :3333)
+
+## Testing
+
+- **All code changes (backend and frontend) must include corresponding test cases**
+- Backend: Go `testing` package, table-driven tests, files next to code (`foo.go` → `foo_test.go`)
+- Frontend: Vitest + React Testing Library, files next to source (`foo.tsx` → `foo.test.tsx`)
+
 ## Key Conventions
 
-- Balance stored as BIGINT cents: 10,000 credits = 1,000,000 in DB
+- Balance stored as BIGINT credits (1 credit = 1 in DB). New users start with 10,000 credits
 - Environment variables loaded via `godotenv` (see `backend/.env.example`)
 - All database operations use transactions where atomicity is required

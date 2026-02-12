@@ -26,7 +26,7 @@ const PERIODS = [
 ]
 
 function formatCredits(amount: number): string {
-  return (amount / 100).toLocaleString()
+  return amount.toLocaleString()
 }
 
 function getRankIcon(rank: number) {

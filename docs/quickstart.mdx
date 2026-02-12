@@ -1,0 +1,109 @@
+---
+title: Quickstart
+description: Get Poly-Predict running locally in minutes
+---
+
+## Prerequisites
+
+- **Docker** and Docker Compose
+- **Go** 1.24+
+- **Node.js** 22+
+- **Make**
+
+## Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/poly-predict/poly-predict.git
+    cd poly-predict
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example env file and fill in your values:
+    ```bash
+    cp backend/.env.example backend/.env
+    ```
+
+    Key variables to set:
+    - `DATABASE_URL` — PostgreSQL connection string
+    - `SUPABASE_JWT_SECRET` — Supabase JWT secret for user auth
+    - `POLYMARKET_API_URL` — Polymarket Gamma API base URL
+  </Step>
+
+  <Step title="Start infrastructure">
+    Launch PostgreSQL and Redis with Docker:
+    ```bash
+    make dev-up
+    ```
+  </Step>
+
+  <Step title="Run database migrations">
+    ```bash
+    make migrate-up
+    ```
+  </Step>
+
+  <Step title="Start backend services">
+    Open separate terminals for each service:
+
+    <CodeGroup>
+    ```bash API Service
+    make dev-api
+    ```
+
+    ```bash Admin Service
+    make dev-admin
+    ```
+
+    ```bash Scraper
+    make dev-scraper
+    ```
+
+    ```bash Settler
+    make dev-settler
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start frontend apps">
+    <CodeGroup>
+    ```bash User Frontend
+    make dev-web
+    ```
+
+    ```bash Admin Frontend
+    make dev-admin-web
+    ```
+    </CodeGroup>
+  </Step>
+</Steps>
+
+## Verify
+
+Check that the services are running:
+
+<CodeGroup>
+```bash API Health
+curl http://localhost:8080/api/v1/events?page=1&page_size=1
+```
+
+```bash Admin Health
+curl http://localhost:8081/api/v1/dashboard \
+  -H "Authorization: Bearer <admin-token>"
+```
+</CodeGroup>
+
+| Service     | URL                     |
+| ----------- | ----------------------- |
+| User API    | http://localhost:8080    |
+| Admin API   | http://localhost:8081    |
+| Web App     | http://localhost:3000    |
+| Admin Panel | http://localhost:3001    |
+
+## What's Next?
+
+- [Place your first bet](/guides/placing-bets)
+- [Explore the API](/api-reference/overview)
+- [Understand the architecture](/architecture)

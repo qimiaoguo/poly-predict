@@ -38,7 +38,7 @@ interface PaginatedSettlements {
 }
 
 function formatCredits(value: number): string {
-  return (value / 100).toLocaleString() + ' credits'
+  return value.toLocaleString() + ' credits'
 }
 
 export default function SettlementsPage() {

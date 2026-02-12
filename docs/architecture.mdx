@@ -1,0 +1,75 @@
+---
+title: Architecture
+description: System design and service overview
+---
+
+## Services
+
+Poly-Predict is composed of six services sharing a single PostgreSQL database.
+
+| Service        | Type       | Port  | Description                                  |
+| -------------- | ---------- | ----- | -------------------------------------------- |
+| **api**        | HTTP       | 8080  | User-facing API (events, bets, rankings)     |
+| **admin**      | HTTP       | 8081  | Admin API (user/event mgmt, settlements)     |
+| **scraper**    | Cron (30m) | —     | Syncs events from Polymarket APIs            |
+| **settler**    | Cron (5m)  | —     | Settles resolved events, distributes credits |
+| **web**        | Next.js    | 3000  | User-facing frontend                         |
+| **admin-web**  | Next.js    | 3001  | Admin dashboard frontend                     |
+
+## Tech Stack
+
+- **Backend:** Go 1.24, Gin, pgx/v5, zerolog, robfig/cron
+- **Frontend:** Next.js 16, Tailwind v4, shadcn/ui
+- **Database:** PostgreSQL (via Docker in dev)
+- **Auth:** Supabase JWT (user API), custom JWT + bcrypt (admin API)
+
+## Database Schema
+
+The platform uses 8 tables across 4 migration files:
+
+| Table                | Purpose                                         |
+| -------------------- | ----------------------------------------------- |
+| `users`              | User profiles, balances, stats, streaks         |
+| `events`             | Prediction markets synced from Polymarket       |
+| `price_history`      | Historical outcome prices per event             |
+| `bets`               | User bets with locked odds and status           |
+| `credit_transactions`| Ledger of all credit movements                  |
+| `rankings`           | Pre-computed leaderboard snapshots              |
+| `settlements`        | Settlement records linking events to payouts    |
+| `admin_users`        | Admin accounts with hashed passwords            |
+
+## Key Flows
+
+### Bet Placement
+
+When a user places a bet, the API service executes an **atomic transaction** that:
+
+1. Validates the event is `open` and the user has sufficient balance
+2. Locks the current odds for the chosen outcome
+3. Calculates `potential_payout = amount / odds`
+4. Deducts `amount` from user balance, adds to `frozen_balance`
+5. Creates the `bet` record with status `pending`
+6. Logs a `credit_transaction` of type `bet_placed`
+
+All steps succeed or none do — no partial state.
+
+### Settlement
+
+The **settler** service runs every 5 minutes and:
+
+1. Queries Polymarket for events that have resolved since the last check
+2. For each resolved event, runs a transaction:
+   - Updates event status to `resolved` with the winning outcome
+   - Marks winning bets as `won`, calculates and credits payouts
+   - Marks losing bets as `lost`, releases frozen balance
+   - Creates `credit_transaction` records for each payout
+   - Creates a `settlement` record with totals
+3. Recalculates rankings for all affected users
+
+### Scraper Sync
+
+The **scraper** runs every 30 minutes and:
+
+1. Fetches active events from the Polymarket Gamma API
+2. Upserts events into the database (new events are inserted, existing events update prices/volume)
+3. Records current outcome prices in `price_history` for charting

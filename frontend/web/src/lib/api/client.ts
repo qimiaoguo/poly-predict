@@ -37,10 +37,10 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return json.data
 }
 
-export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   const headers = await getAuthHeaders()
   const res = await fetch(`${API_BASE}${path}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers,
     body: JSON.stringify(body),
   })

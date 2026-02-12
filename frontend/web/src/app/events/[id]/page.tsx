@@ -40,7 +40,7 @@ function statusColor(status: string) {
 }
 
 function formatCredits(amount: number): string {
-  return (amount / 100).toLocaleString()
+  return amount.toLocaleString()
 }
 
 export default function EventDetailPage({

@@ -36,7 +36,7 @@ All HTTP responses use `pkg/response`: `Success(c, data)`, `Created(c, data)`, `
 
 ### Database Conventions
 
-- Balance stored as BIGINT cents: 10,000 credits = 1,000,000 in DB. New users start with 10,000 credits.
+- Balance stored as BIGINT credits (1 credit = 1 in DB). New users start with 10,000 credits.
 - Event outcomes and prices stored as JSONB arrays (e.g., `["Yes","No"]` and `["0.65","0.35"]`)
 - Atomic operations use transactions with `SELECT ... FOR UPDATE` row locking to prevent race conditions
 - Payout formula: `potential_payout = amount / locked_odds`
@@ -52,6 +52,12 @@ All HTTP responses use `pkg/response`: `Success(c, data)`, `Created(c, data)`, `
 ## Environment
 
 Backend `.env` lives in this directory (`backend/.env`). Makefile runs services with `cd backend &&`, so `godotenv.Load()` picks it up automatically. See `.env.example` for required variables.
+
+## Important Checks Before Writing Code
+
+- **Before writing SQL JOINs**, read `backend/migrations/` to confirm column names exist on the target table
+- **Before modifying bet/settlement logic**, trace all side effects: balance updates, `total_bets`/`total_wins` counters, rankings recalculation, credit transaction logs
+- **ForceSettle (admin) and settler cron must stay in sync** — both recalculate rankings for all periods (all_time, weekly, monthly)
 
 ## Code Style
 

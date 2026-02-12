@@ -26,14 +26,14 @@ interface DashboardData {
     id: string
     user_display_name: string
     event_question: string
-    side: string
+    outcome: string
     amount: number
     created_at: string
   }[]
 }
 
 function formatCredits(value: number): string {
-  return (value / 100).toLocaleString() + ' credits'
+  return value.toLocaleString() + ' credits'
 }
 
 export default function DashboardPage() {
@@ -116,8 +116,8 @@ export default function DashboardPage() {
                       {bet.event_question}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={bet.side === 'yes' ? 'default' : 'secondary'}>
-                        {bet.side.toUpperCase()}
+                      <Badge variant={bet.outcome === 'yes' ? 'default' : 'secondary'}>
+                        {bet.outcome?.toUpperCase() ?? 'N/A'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

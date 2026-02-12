@@ -1,0 +1,128 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Poly-Predict Docs",
+  "logo": {
+    "dark": "/images/logo-dark.svg",
+    "light": "/images/logo-light.svg"
+  },
+  "favicon": "/images/favicon.svg",
+  "colors": {
+    "primary": "#3b82f6",
+    "light": "#60a5fa",
+    "dark": "#2563eb",
+    "anchors": {
+      "from": "#3b82f6",
+      "to": "#2563eb"
+    }
+  },
+  "modeToggle": {
+    "default": "dark"
+  },
+  "tabs": [
+    {
+      "name": "Documentation",
+      "url": "/"
+    },
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["introduction", "quickstart", "architecture"]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/placing-bets",
+        "guides/leaderboard",
+        "guides/admin-panel"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": ["api-reference/overview"]
+    },
+    {
+      "group": "User API",
+      "pages": [
+        {
+          "group": "Events",
+          "pages": [
+            "api-reference/user-api.yaml GET /api/v1/events",
+            "api-reference/user-api.yaml GET /api/v1/events/{id}",
+            "api-reference/user-api.yaml GET /api/v1/events/{id}/prices",
+            "api-reference/user-api.yaml GET /api/v1/categories"
+          ]
+        },
+        {
+          "group": "Bets",
+          "pages": [
+            "api-reference/user-api.yaml POST /api/v1/bets",
+            "api-reference/user-api.yaml GET /api/v1/bets",
+            "api-reference/user-api.yaml GET /api/v1/bets/{id}"
+          ]
+        },
+        {
+          "group": "Profile",
+          "pages": [
+            "api-reference/user-api.yaml GET /api/v1/users/me",
+            "api-reference/user-api.yaml PUT /api/v1/users/me",
+            "api-reference/user-api.yaml GET /api/v1/users/me/transactions"
+          ]
+        },
+        {
+          "group": "Rankings",
+          "pages": [
+            "api-reference/user-api.yaml GET /api/v1/rankings"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Admin API",
+      "pages": [
+        {
+          "group": "Auth",
+          "pages": [
+            "api-reference/admin-api.yaml POST /api/v1/auth/login"
+          ]
+        },
+        {
+          "group": "Dashboard",
+          "pages": [
+            "api-reference/admin-api.yaml GET /api/v1/dashboard"
+          ]
+        },
+        {
+          "group": "Users",
+          "pages": [
+            "api-reference/admin-api.yaml GET /api/v1/users",
+            "api-reference/admin-api.yaml GET /api/v1/users/{id}",
+            "api-reference/admin-api.yaml PATCH /api/v1/users/{id}"
+          ]
+        },
+        {
+          "group": "Events",
+          "pages": [
+            "api-reference/admin-api.yaml GET /api/v1/events",
+            "api-reference/admin-api.yaml PATCH /api/v1/events/{id}"
+          ]
+        },
+        {
+          "group": "Settlements",
+          "pages": [
+            "api-reference/admin-api.yaml POST /api/v1/events/{id}/settle",
+            "api-reference/admin-api.yaml GET /api/v1/settlements"
+          ]
+        }
+      ]
+    }
+  ],
+  "openapi": ["api-reference/user-api.yaml", "api-reference/admin-api.yaml"],
+  "footerSocials": {
+    "github": "https://github.com/poly-predict"
+  }
+}

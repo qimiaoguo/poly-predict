@@ -92,7 +92,7 @@ func main() {
 	{
 		events.GET("", eventHandler.ListEvents)
 		events.GET("/:id", eventHandler.GetEvent)
-		events.GET("/:id/price-history", eventHandler.GetPriceHistory)
+		events.GET("/:id/prices", eventHandler.GetPriceHistory)
 	}
 
 	api.GET("/categories", eventHandler.GetCategories)

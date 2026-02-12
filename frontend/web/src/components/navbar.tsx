@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/use-auth'
 
-function formatBalance(balance: number): string {
-  return (balance / 100).toLocaleString()
+function formatBalance(balance: number | undefined): string {
+  return (balance ?? 0).toLocaleString()
 }
 
 export function Navbar() {

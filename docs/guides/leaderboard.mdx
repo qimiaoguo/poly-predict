@@ -1,0 +1,52 @@
+---
+title: Leaderboard
+description: How rankings and competition work
+---
+
+## Ranking Periods
+
+The leaderboard supports three time periods:
+
+| Period      | Window              | Description                        |
+| ----------- | ------------------- | ---------------------------------- |
+| **All Time** | Since account creation | Lifetime performance               |
+| **Weekly**  | Last 7 days         | Rolling week performance           |
+| **Monthly** | Last 30 days        | Rolling month performance          |
+
+Switch between periods using the tabs on the leaderboard page.
+
+## Ranking Metrics
+
+You can sort the leaderboard by any of these metrics:
+
+| Metric          | Formula                                      | Description                           |
+| --------------- | -------------------------------------------- | ------------------------------------- |
+| **Total Profit** | Sum of all payout gains minus losses          | Net credits earned from betting       |
+| **Win Rate**    | `win_count / (win_count + loss_count)`        | Percentage of bets won (0.0 to 1.0)  |
+| **ROI**         | `total_profit / total_amount_wagered`         | Return on investment as a decimal     |
+
+Additional stats displayed per player:
+
+- **Total Assets** — Available balance + frozen balance
+- **Win/Loss Count** — Number of winning and losing bets
+- **Consecutive Wins** — Current win streak
+
+## How Rankings Update
+
+Rankings are **recalculated after each settlement cycle**. When the settler service resolves an event:
+
+1. All bets on that event are settled (won/lost)
+2. User stats are updated (profit, win count, streaks)
+3. Rankings are recomputed for all affected users across all three periods
+
+This means the leaderboard reflects the latest settled results, not real-time odds changes.
+
+<Note>
+  Only settled bets count toward rankings. Pending bets do not affect your leaderboard position.
+</Note>
+
+## Category Rankings
+
+Rankings can also be filtered by **event category** (e.g., Politics, Sports, Crypto). This lets you see who performs best in specific domains.
+
+Pass the `category` query parameter to the rankings API, or use the category filter on the leaderboard page.

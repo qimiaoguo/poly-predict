@@ -51,7 +51,7 @@ export default function HomePage() {
 
   const queryParams = new URLSearchParams()
   if (category !== 'all') queryParams.set('category', category)
-  if (search) queryParams.set('q', search)
+  if (search) queryParams.set('search', search)
   queryParams.set('sort', sort)
   queryParams.set('page', page.toString())
   queryParams.set('page_size', '12')

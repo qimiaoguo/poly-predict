@@ -275,30 +275,73 @@ func settleLosingBet(ctx context.Context, tx pgx.Tx, bet *model.Bet, event *mode
 	return nil
 }
 
-// recalculateRankings rebuilds the all_time rankings table from current user
-// stats. It deletes old rows and reinserts in a single statement.
+// recalculateRankings rebuilds all rankings (all_time, weekly, monthly).
 func (s *Settler) recalculateRankings(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `
-		DELETE FROM rankings WHERE period = 'all_time' AND category IS NULL;
+		DELETE FROM rankings WHERE category IS NULL;
 
+		-- All time rankings from user stats
 		INSERT INTO rankings (
 			user_id, period, total_assets, total_profit,
 			win_count, loss_count, win_rate, roi,
 			consecutive_wins, rank_position
 		)
 		SELECT
-			u.id,
-			'all_time',
+			u.id, 'all_time',
 			u.balance + u.frozen_balance,
-			(u.balance + u.frozen_balance) - 1000000,
+			(u.balance + u.frozen_balance) - 10000,
 			u.total_wins,
 			u.total_bets - u.total_wins,
 			CASE WHEN u.total_bets > 0 THEN u.total_wins::numeric / u.total_bets ELSE 0 END,
-			CASE WHEN u.total_bets > 0 THEN ((u.balance + u.frozen_balance) - 1000000)::numeric / 1000000 ELSE 0 END,
+			CASE WHEN u.total_bets > 0 THEN ((u.balance + u.frozen_balance) - 10000)::numeric / 10000 ELSE 0 END,
 			u.current_streak,
 			ROW_NUMBER() OVER (ORDER BY (u.balance + u.frozen_balance) DESC)
 		FROM users u
 		WHERE u.total_bets > 0;
+
+		-- Weekly rankings from bets settled in the last 7 days
+		INSERT INTO rankings (
+			user_id, period, total_assets, total_profit,
+			win_count, loss_count, win_rate, roi,
+			consecutive_wins, rank_position
+		)
+		SELECT
+			b.user_id, 'weekly',
+			COALESCE(SUM(CASE WHEN b.status = 'won' THEN b.payout ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN b.status = 'won' THEN b.payout - b.amount ELSE -b.amount END), 0),
+			COUNT(*) FILTER (WHERE b.status = 'won'),
+			COUNT(*) FILTER (WHERE b.status = 'lost'),
+			CASE WHEN COUNT(*) > 0 THEN COUNT(*) FILTER (WHERE b.status = 'won')::numeric / COUNT(*) ELSE 0 END,
+			CASE WHEN SUM(b.amount) > 0 THEN
+				SUM(CASE WHEN b.status = 'won' THEN b.payout - b.amount ELSE -b.amount END)::numeric / SUM(b.amount)
+			ELSE 0 END,
+			0,
+			ROW_NUMBER() OVER (ORDER BY SUM(CASE WHEN b.status = 'won' THEN b.payout - b.amount ELSE -b.amount END) DESC)
+		FROM bets b
+		WHERE b.status IN ('won', 'lost') AND b.settled_at >= NOW() - INTERVAL '7 days'
+		GROUP BY b.user_id;
+
+		-- Monthly rankings from bets settled in the last 30 days
+		INSERT INTO rankings (
+			user_id, period, total_assets, total_profit,
+			win_count, loss_count, win_rate, roi,
+			consecutive_wins, rank_position
+		)
+		SELECT
+			b.user_id, 'monthly',
+			COALESCE(SUM(CASE WHEN b.status = 'won' THEN b.payout ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN b.status = 'won' THEN b.payout - b.amount ELSE -b.amount END), 0),
+			COUNT(*) FILTER (WHERE b.status = 'won'),
+			COUNT(*) FILTER (WHERE b.status = 'lost'),
+			CASE WHEN COUNT(*) > 0 THEN COUNT(*) FILTER (WHERE b.status = 'won')::numeric / COUNT(*) ELSE 0 END,
+			CASE WHEN SUM(b.amount) > 0 THEN
+				SUM(CASE WHEN b.status = 'won' THEN b.payout - b.amount ELSE -b.amount END)::numeric / SUM(b.amount)
+			ELSE 0 END,
+			0,
+			ROW_NUMBER() OVER (ORDER BY SUM(CASE WHEN b.status = 'won' THEN b.payout - b.amount ELSE -b.amount END) DESC)
+		FROM bets b
+		WHERE b.status IN ('won', 'lost') AND b.settled_at >= NOW() - INTERVAL '30 days'
+		GROUP BY b.user_id;
 	`)
 	if err != nil {
 		return fmt.Errorf("recalculate rankings: %w", err)

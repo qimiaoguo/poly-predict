@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/use-auth'
-import { apiPut, apiFetchPaginated } from '@/lib/api/client'
+import { apiPatch, apiFetchPaginated } from '@/lib/api/client'
 import { useToast } from '@/hooks/use-toast'
 
 interface Bet {
@@ -45,7 +45,7 @@ interface Transaction {
 }
 
 function formatCredits(amount: number): string {
-  return (amount / 100).toLocaleString()
+  return amount.toLocaleString()
 }
 
 function betStatusColor(status: string) {
@@ -109,7 +109,7 @@ export default function ProfilePage() {
   async function handleSaveName() {
     if (!displayName.trim()) return
     try {
-      await apiPut('/api/v1/users/me', { display_name: displayName.trim() })
+      await apiPatch('/api/v1/users/me', { display_name: displayName.trim() })
       await fetchProfile()
       setEditingName(false)
       toast({ title: 'Display name updated' })

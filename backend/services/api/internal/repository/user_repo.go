@@ -80,7 +80,7 @@ func (r *UserRepository) UpdateDisplayName(ctx context.Context, id, name string)
 // GetOrCreate retrieves a user by ID, or creates one with default values if not found.
 // Uses INSERT ... ON CONFLICT DO NOTHING followed by a SELECT to handle the upsert.
 func (r *UserRepository) GetOrCreate(ctx context.Context, id, displayName string) (*model.User, error) {
-	const defaultBalance int64 = 10000
+	const defaultBalance int64 = 10000 // 10,000 credits
 
 	upsertQuery := `INSERT INTO users (id, display_name, balance, created_at, updated_at)
 	                VALUES ($1, $2, $3, NOW(), NOW())

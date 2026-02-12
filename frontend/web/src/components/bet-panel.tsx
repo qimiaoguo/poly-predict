@@ -67,7 +67,7 @@ export function BetPanel({ eventId, yesPrice, noPrice, status }: BetPanelProps) 
       setAmount('')
       toast({
         title: 'Bet placed!',
-        description: `You bet ${(amountNum / 100).toLocaleString()} credits on ${outcome.toUpperCase()}`,
+        description: `You bet ${amountNum.toLocaleString()} credits on ${outcome.toUpperCase()}`,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to place bet'
@@ -146,7 +146,7 @@ export function BetPanel({ eventId, yesPrice, noPrice, status }: BetPanelProps) 
               }}
               disabled={!isAuthenticated || status !== 'open'}
             >
-              {(quickAmount / 100).toLocaleString()}
+              {quickAmount.toLocaleString()}
             </Button>
           ))}
         </div>
@@ -163,13 +163,13 @@ export function BetPanel({ eventId, yesPrice, noPrice, status }: BetPanelProps) 
           <div className="flex justify-between">
             <span className="text-muted-foreground">Potential payout</span>
             <span className="font-semibold">
-              {(potentialPayout / 100).toLocaleString()} credits
+              {potentialPayout.toLocaleString()} credits
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Potential profit</span>
             <span className="font-semibold text-green-600 dark:text-green-400">
-              +{(potentialProfit / 100).toLocaleString()} credits
+              +{potentialProfit.toLocaleString()} credits
             </span>
           </div>
         </div>
@@ -202,7 +202,7 @@ export function BetPanel({ eventId, yesPrice, noPrice, status }: BetPanelProps) 
         {/* Balance */}
         {isAuthenticated && user && (
           <p className="text-center text-xs text-muted-foreground">
-            Your balance: {(user.balance / 100).toLocaleString()} credits
+            Your balance: {(user.balance ?? 0).toLocaleString()} credits
           </p>
         )}
       </CardContent>

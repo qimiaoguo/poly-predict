@@ -124,7 +124,7 @@ poly-predict/
 
 ## Database Schema
 
-- **users** — balance (BIGINT cents), frozen_balance, level, XP, streaks, stats
+- **users** — balance (BIGINT credits), frozen_balance, level, XP, streaks, stats
 - **events** — synced from Polymarket, JSONB outcomes/prices, status enum
 - **price_history** — time-series price data per outcome
 - **bets** — user bets with locked odds and potential payout
@@ -138,7 +138,7 @@ poly-predict/
 - **Bet placement:** Atomic transaction — locks user row, verifies balance, freezes credits, records bet and audit log
 - **Settlement:** Idempotent per event — checks settlement exists, locks pending bets, distributes payouts, updates streaks, recalculates rankings
 - **Payout formula:** `potential_payout = amount / locked_odds`
-- **Balance:** Stored as BIGINT in cents (1,000,000 = 10,000.00 credits). New users start with 10,000 credits.
+- **Balance:** Stored as BIGINT credits (1 credit = 1 in DB). New users start with 10,000 credits.
 
 ## API Documentation
 

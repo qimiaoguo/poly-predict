@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     id              UUID PRIMARY KEY,
     display_name    VARCHAR(100) NOT NULL,
     avatar_url      TEXT,
-    balance         BIGINT NOT NULL DEFAULT 1000000,
+    balance         BIGINT NOT NULL DEFAULT 10000,
     frozen_balance  BIGINT NOT NULL DEFAULT 0,
     level           INTEGER NOT NULL DEFAULT 1,
     xp              INTEGER NOT NULL DEFAULT 0,

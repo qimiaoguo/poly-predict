@@ -75,8 +75,10 @@ func (r *EventRepository) List(ctx context.Context, filters EventFilters) ([]mod
 	}
 
 	// Sort clause.
-	orderClause := "ORDER BY created_at DESC"
+	orderClause := "ORDER BY CASE WHEN end_date > NOW() THEN 0 ELSE 1 END, volume_24h DESC"
 	switch filters.Sort {
+	case "trending":
+		orderClause = "ORDER BY CASE WHEN end_date > NOW() THEN 0 ELSE 1 END, volume_24h DESC"
 	case "volume":
 		orderClause = "ORDER BY volume DESC"
 	case "volume_24h":
@@ -86,7 +88,7 @@ func (r *EventRepository) List(ctx context.Context, filters EventFilters) ([]mod
 	case "newest":
 		orderClause = "ORDER BY created_at DESC"
 	case "ending_soon":
-		orderClause = "ORDER BY end_date ASC NULLS LAST"
+		orderClause = "ORDER BY CASE WHEN end_date > NOW() THEN 0 ELSE 1 END, end_date ASC NULLS LAST"
 	}
 
 	offset := (filters.Page - 1) * filters.PageSize

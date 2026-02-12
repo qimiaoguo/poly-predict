@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -76,13 +77,7 @@ func (s *BetService) PlaceBet(ctx context.Context, userID, eventID, outcome stri
 		return nil, fmt.Errorf("parse outcome prices: %w", err)
 	}
 
-	outcomeIdx := -1
-	for i, label := range outcomeLabels {
-		if label == outcome {
-			outcomeIdx = i
-			break
-		}
-	}
+	outcomeIdx := findOutcomeIndex(outcomeLabels, outcome)
 	if outcomeIdx == -1 || outcomeIdx >= len(prices) {
 		return nil, fmt.Errorf("invalid outcome: %s", outcome)
 	}
@@ -97,9 +92,9 @@ func (s *BetService) PlaceBet(ctx context.Context, userID, eventID, outcome stri
 	// 4. Calculate potential payout: amount / lockedOdds (as int64).
 	potentialPayout := int64(float64(amount) / lockedOdds)
 
-	// 5. Update user balances.
+	// 5. Update user balances and increment total_bets.
 	_, err = tx.Exec(ctx,
-		"UPDATE users SET balance = balance - $1, frozen_balance = frozen_balance + $1, updated_at = NOW() WHERE id = $2",
+		"UPDATE users SET balance = balance - $1, frozen_balance = frozen_balance + $1, total_bets = total_bets + 1, updated_at = NOW() WHERE id = $2",
 		amount, userID,
 	)
 	if err != nil {
@@ -159,4 +154,16 @@ func (s *BetService) ListByUser(ctx context.Context, userID string, status strin
 // GetByID retrieves a single bet by ID.
 func (s *BetService) GetByID(ctx context.Context, id string) (*model.Bet, error) {
 	return s.betRepo.GetByID(ctx, id)
+}
+
+// findOutcomeIndex returns the index of outcome in labels using case-insensitive
+// comparison, or -1 if not found. This allows the API to accept lowercase outcomes
+// (as defined in the spec) while the database stores capitalized labels from Polymarket.
+func findOutcomeIndex(labels []string, outcome string) int {
+	for i, label := range labels {
+		if strings.EqualFold(label, outcome) {
+			return i
+		}
+	}
+	return -1
 }

@@ -1,0 +1,70 @@
+---
+title: Placing Bets
+description: How to bet on prediction market events
+---
+
+## How Betting Works
+
+Poly-Predict uses virtual credits — no real money is involved. Every new user starts with **10,000 credits**.
+
+### Step by Step
+
+<Steps>
+  <Step title="Browse events">
+    Visit the homepage or the events page to see open prediction markets. Filter by category, search by keyword, or sort by volume.
+  </Step>
+
+  <Step title="Select an event">
+    Click on any event to see its details: the question, current odds for each outcome, price history chart, and volume stats.
+  </Step>
+
+  <Step title="Choose an outcome">
+    Pick **Yes** or **No** (or whichever outcomes the event offers). The current odds are displayed next to each option.
+  </Step>
+
+  <Step title="Enter your bet amount">
+    Type the number of credits you want to wager. The potential payout is calculated and shown before you confirm.
+  </Step>
+
+  <Step title="Confirm">
+    Submit your bet. Your credits are immediately deducted from your available balance and moved to your frozen balance.
+  </Step>
+</Steps>
+
+## Odds and Payout
+
+Odds are sourced from Polymarket and represent the market's probability for each outcome. They are **locked at the time you place your bet** — subsequent price changes don't affect existing bets.
+
+The payout formula:
+
+```
+potential_payout = amount / locked_odds
+```
+
+**Example:** You bet 100 credits on "Yes" at odds 0.40 (40% probability).
+
+- `potential_payout = 100 / 0.40 = 250 credits`
+- If you win, you receive 250 credits (150 profit)
+- If you lose, you lose your 100 credits
+
+<Note>
+  Lower odds (closer to 0) mean higher potential payouts but lower probability. Higher odds (closer to 1) mean lower payouts but higher probability.
+</Note>
+
+## Bet Statuses
+
+| Status      | Meaning                                                  |
+| ----------- | -------------------------------------------------------- |
+| `pending`   | Event is still open — bet is active                      |
+| `won`       | Event resolved in your favor — payout credited           |
+| `lost`      | Event resolved against your pick — credits forfeited     |
+| `cancelled` | Bet was cancelled (e.g. event removed before resolution) |
+
+## Balance Types
+
+- **Available balance** — Credits you can use to place new bets
+- **Frozen balance** — Credits locked in active (pending) bets
+
+When you place a bet, credits move from available to frozen. When a bet settles:
+- **Win:** frozen credits are released and the full payout is added to your available balance
+- **Loss:** frozen credits are removed from your account

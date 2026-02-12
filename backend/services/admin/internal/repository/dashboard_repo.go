@@ -3,19 +3,37 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/poly-predict/backend/pkg/model"
 )
 
+// RecentBet extends model.Bet with joined user/event info for the dashboard.
+type RecentBet struct {
+	ID              string          `json:"id"`
+	UserID          string          `json:"user_id"`
+	EventID         string          `json:"event_id"`
+	Outcome         string          `json:"outcome"`
+	Amount          int64           `json:"amount"`
+	LockedOdds      float64         `json:"locked_odds"`
+	PotentialPayout int64           `json:"potential_payout"`
+	Status          model.BetStatus `json:"status"`
+	Payout          *int64          `json:"payout"`
+	SettledAt       *time.Time      `json:"settled_at"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UserDisplayName string          `json:"user_display_name"`
+	EventQuestion   string          `json:"event_question"`
+}
+
 // DashboardStats holds aggregate statistics for the admin dashboard.
 type DashboardStats struct {
-	TotalUsers   int64      `json:"total_users"`
-	TotalBets    int64      `json:"total_bets"`
-	ActiveEvents int64      `json:"active_events"`
-	TotalVolume  int64      `json:"total_volume"`
-	RecentBets   []model.Bet `json:"recent_bets"`
+	TotalUsers   int64       `json:"total_users"`
+	TotalBets    int64       `json:"total_bets"`
+	ActiveEvents int64       `json:"active_events"`
+	TotalVolume  int64       `json:"total_volume"`
+	RecentBets   []RecentBet `json:"recent_bets"`
 }
 
 // DashboardRepository handles database operations for admin dashboard data.
@@ -52,12 +70,16 @@ func (r *DashboardRepository) GetStats(ctx context.Context) (*DashboardStats, er
 		return nil, fmt.Errorf("failed to sum bet volume: %w", err)
 	}
 
-	// Recent 10 bets.
+	// Recent 10 bets with user display name and event question.
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, user_id, event_id, outcome, amount, locked_odds,
-			potential_payout, status, payout, settled_at, created_at
-		 FROM bets
-		 ORDER BY created_at DESC
+		`SELECT b.id, b.user_id, b.event_id, b.outcome, b.amount, b.locked_odds,
+			b.potential_payout, b.status, b.payout, b.settled_at, b.created_at,
+			COALESCE(u.display_name, 'Unknown') AS user_display_name,
+			COALESCE(e.question, 'Unknown') AS event_question
+		 FROM bets b
+		 LEFT JOIN users u ON u.id = b.user_id
+		 LEFT JOIN events e ON e.id = b.event_id
+		 ORDER BY b.created_at DESC
 		 LIMIT 10`,
 	)
 	if err != nil {
@@ -66,18 +88,19 @@ func (r *DashboardRepository) GetStats(ctx context.Context) (*DashboardStats, er
 	defer rows.Close()
 
 	for rows.Next() {
-		var b model.Bet
+		var rb RecentBet
 		if err := rows.Scan(
-			&b.ID, &b.UserID, &b.EventID, &b.Outcome, &b.Amount, &b.LockedOdds,
-			&b.PotentialPayout, &b.Status, &b.Payout, &b.SettledAt, &b.CreatedAt,
+			&rb.ID, &rb.UserID, &rb.EventID, &rb.Outcome, &rb.Amount, &rb.LockedOdds,
+			&rb.PotentialPayout, &rb.Status, &rb.Payout, &rb.SettledAt, &rb.CreatedAt,
+			&rb.UserDisplayName, &rb.EventQuestion,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan bet: %w", err)
 		}
-		stats.RecentBets = append(stats.RecentBets, b)
+		stats.RecentBets = append(stats.RecentBets, rb)
 	}
 
 	if stats.RecentBets == nil {
-		stats.RecentBets = []model.Bet{}
+		stats.RecentBets = []RecentBet{}
 	}
 
 	return stats, nil

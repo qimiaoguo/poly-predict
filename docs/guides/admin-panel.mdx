@@ -1,0 +1,67 @@
+---
+title: Admin Panel
+description: Managing the platform through the admin dashboard
+---
+
+## Access
+
+The admin panel runs at [localhost:3001](http://localhost:3001) in development. Log in with your admin credentials (email + password). Admin accounts are stored in the `admin_users` table with bcrypt-hashed passwords.
+
+## Dashboard
+
+The dashboard provides a quick overview of platform health:
+
+- **Total Users** — Number of registered users
+- **Total Bets** — Total bets placed across all events
+- **Active Events** — Number of currently open events
+- **Total Volume** — Aggregate betting volume
+- **Recent Bets** — Latest bets placed on the platform
+
+## Events Management
+
+Browse all events with filters for status (`open`, `closed`, `resolved`) and category. From here you can:
+
+- **View event details** — See the question, outcomes, odds, and volume
+- **Update an event** — Change the category or status
+- **Force settle** — Manually resolve an event by specifying the winning outcome
+
+### Force Settlement
+
+If an event needs to be resolved before the automatic settler picks it up:
+
+1. Navigate to the event
+2. Click "Settle"
+3. Select the winning outcome
+4. Confirm
+
+This triggers the same settlement logic as the automatic settler — all bets are processed, payouts distributed, and rankings updated.
+
+<Warning>
+  Force settlement is irreversible. Double-check the winning outcome before confirming.
+</Warning>
+
+## User Management
+
+View all platform users with search and sorting options. For each user you can:
+
+- **View profile** — See balance, stats, recent bets, and account details
+- **Adjust balance** — Add or subtract credits from a user's account
+- **Ban/unban** — Disable or re-enable a user's account
+
+### Balance Adjustments
+
+Send a `PATCH` request to adjust a user's balance:
+- **Positive value** — Adds credits (e.g., compensation, bonus)
+- **Negative value** — Removes credits (e.g., correction)
+
+All balance adjustments are logged as credit transactions for audit purposes.
+
+## Settlements History
+
+View a chronological log of all event settlements, including:
+
+- Which event was settled
+- The resolved outcome
+- Number of bets affected
+- Total credits paid out
+- Settlement timestamp

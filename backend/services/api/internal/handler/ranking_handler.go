@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/poly-predict/backend/pkg/model"
 	"github.com/poly-predict/backend/pkg/response"
 	"github.com/poly-predict/backend/services/api/internal/service"
 )
@@ -43,7 +42,7 @@ func (h *RankingHandler) GetRankings(c *gin.Context) {
 	}
 
 	if rankings == nil {
-		rankings = []model.Ranking{}
+		rankings = []service.RankingEntry{}
 	}
 
 	response.Paginated(c, rankings, total, page, pageSize)
