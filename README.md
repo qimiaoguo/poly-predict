@@ -47,7 +47,8 @@ Virtual prediction market competition platform where users bet credits on real P
 - **Frontend:** Next.js 16, Tailwind CSS, shadcn/ui
 - **Data Fetching:** SWR, Zustand
 - **Charts:** Recharts
-- **API Contract:** OpenAPI 3.0 specs in `shared/`
+- **API Contract:** OpenAPI 3.0 specs in `docs/api-reference/`
+- **Docs:** Mintlify
 
 ## Getting Started
 
@@ -65,8 +66,8 @@ Virtual prediction market competition platform where users bet credits on real P
 ```bash
 git clone git@github.com:qimiaoguo/poly-predict.git
 cd poly-predict
-cp .env.example .env
-# Edit .env with your Supabase credentials
+cp backend/.env.example backend/.env
+# Edit backend/.env with your Supabase credentials
 ```
 
 2. **Start local database:**
@@ -115,9 +116,13 @@ poly-predict/
 ├── frontend/
 │   ├── web/                     # User Next.js app
 │   └── admin-web/               # Admin Next.js app
-├── shared/
-│   ├── api-spec.yaml            # User API OpenAPI spec
-│   └── admin-spec.yaml          # Admin API OpenAPI spec
+├── docs/
+│   ├── mint.json                # Mintlify config
+│   ├── *.mdx                    # Documentation pages
+│   ├── guides/                  # Feature guides
+│   └── api-reference/
+│       ├── user-api.yaml        # User API OpenAPI spec (source of truth)
+│       └── admin-api.yaml       # Admin API OpenAPI spec (source of truth)
 ├── docker-compose.yml           # PostgreSQL + Redis (dev)
 └── Makefile                     # Unified command entry
 ```
@@ -142,9 +147,15 @@ poly-predict/
 
 ## API Documentation
 
-OpenAPI specs are in `shared/`:
-- `api-spec.yaml` — User-facing API (12 endpoints)
-- `admin-spec.yaml` — Admin API (9 endpoints)
+OpenAPI specs live in `docs/api-reference/`:
+- `user-api.yaml` — User-facing API (12 endpoints)
+- `admin-api.yaml` — Admin API (9 endpoints)
+
+Full documentation is built with [Mintlify](https://mintlify.com). To preview locally:
+
+```bash
+make dev-docs   # Starts Mintlify at http://localhost:3333
+```
 
 ## License
 
