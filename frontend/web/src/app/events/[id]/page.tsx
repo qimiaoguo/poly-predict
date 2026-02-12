@@ -8,7 +8,6 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { PriceChart } from '@/components/price-chart'
 import { BetPanel } from '@/components/bet-panel'
 import { apiGet } from '@/lib/api/client'
@@ -59,11 +58,11 @@ export default function EventDetailPage({
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-64 rounded bg-muted" />
-          <div className="h-4 w-full max-w-xl rounded bg-muted" />
-          <div className="h-[400px] rounded-xl bg-muted" />
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="space-y-4">
+          <div className="h-8 w-64 rounded-lg bg-muted shimmer" />
+          <div className="h-4 w-full max-w-xl rounded-lg bg-muted shimmer" />
+          <div className="h-[400px] rounded-xl bg-card border border-border/50 shimmer" />
         </div>
       </div>
     )
@@ -71,13 +70,16 @@ export default function EventDetailPage({
 
   if (error || !event) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 rounded-full bg-muted p-4">
+            <BarChart3 className="h-8 w-8 text-muted-foreground" />
+          </div>
           <h2 className="text-xl font-semibold">Event not found</h2>
           <p className="mt-2 text-muted-foreground">
             This event may have been removed or doesn&apos;t exist.
           </p>
-          <Button asChild className="mt-4">
+          <Button asChild className="mt-6">
             <Link href="/">Back to Events</Link>
           </Button>
         </div>
@@ -86,11 +88,11 @@ export default function EventDetailPage({
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Back Link */}
       <Link
         href="/"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Events
@@ -102,7 +104,7 @@ export default function EventDetailPage({
           {/* Event Header */}
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{event.category}</Badge>
+              <Badge variant="secondary" className="font-medium">{event.category}</Badge>
               <Badge variant="outline" className={statusColor(event.status)}>
                 {event.status}
               </Badge>
@@ -112,9 +114,9 @@ export default function EventDetailPage({
                 </Badge>
               )}
             </div>
-            <h1 className="text-2xl font-bold sm:text-3xl">{event.question}</h1>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{event.question}</h1>
             {event.description && (
-              <p className="mt-3 text-muted-foreground">{event.description}</p>
+              <p className="mt-3 leading-relaxed text-muted-foreground">{event.description}</p>
             )}
           </div>
 
@@ -122,33 +124,39 @@ export default function EventDetailPage({
           <PriceChart eventId={id} />
 
           {/* Event Metadata */}
-          <Card>
+          <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="text-lg">Event Details</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <TrendingUp className="h-3 w-3" />
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="rounded-md bg-muted p-1">
+                      <TrendingUp className="h-3 w-3" />
+                    </div>
                     24h Volume
                   </div>
                   <p className="text-sm font-semibold">
                     {formatCredits(event.volume_24h)} credits
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <BarChart3 className="h-3 w-3" />
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="rounded-md bg-muted p-1">
+                      <BarChart3 className="h-3 w-3" />
+                    </div>
                     Total Volume
                   </div>
                   <p className="text-sm font-semibold">
                     {formatCredits(event.volume)} credits
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="rounded-md bg-muted p-1">
+                      <Calendar className="h-3 w-3" />
+                    </div>
                     End Date
                   </div>
                   <p className="text-sm font-semibold">
@@ -158,9 +166,11 @@ export default function EventDetailPage({
                     {formatDistanceToNow(new Date(event.end_date), { addSuffix: true })}
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="rounded-md bg-muted p-1">
+                      <Calendar className="h-3 w-3" />
+                    </div>
                     Created
                   </div>
                   <p className="text-sm font-semibold">

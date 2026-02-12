@@ -42,16 +42,16 @@ export function EventCard({ event }: EventCardProps) {
   const noPercent = Math.round(parseFloat(event.outcome_prices?.[1] ?? '0') * 100)
 
   return (
-    <Link href={`/events/${event.id}`}>
-      <Card className="h-full transition-shadow hover:shadow-md">
+    <Link href={`/events/${event.id}`} className="group cursor-pointer">
+      <Card className="h-full border-border/50 transition-all duration-200 hover:shadow-lg hover:border-primary/20 group-hover:shadow-primary/5">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight">
               {event.question}
             </h3>
           </div>
           <div className="flex items-center gap-2 pt-1">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs font-medium">
               {event.category}
             </Badge>
             <Badge
@@ -64,27 +64,27 @@ export function EventCard({ event }: EventCardProps) {
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Price bars */}
-          <div className="space-y-2">
-            <div className="space-y-1">
+          <div className="space-y-2.5">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-green-600 dark:text-green-400">Yes</span>
-                <span className="font-mono">{yesPercent}%</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">Yes</span>
+                <span className="font-mono font-semibold">{yesPercent}%</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-green-500 transition-all"
+                  className="h-full rounded-full bg-green-500 transition-all duration-500"
                   style={{ width: `${yesPercent}%` }}
                 />
               </div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-red-600 dark:text-red-400">No</span>
-                <span className="font-mono">{noPercent}%</span>
+                <span className="font-semibold text-red-600 dark:text-red-400">No</span>
+                <span className="font-mono font-semibold">{noPercent}%</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-red-500 transition-all"
+                  className="h-full rounded-full bg-red-500 transition-all duration-500"
                   style={{ width: `${noPercent}%` }}
                 />
               </div>
@@ -92,7 +92,7 @@ export function EventCard({ event }: EventCardProps) {
           </div>
 
           {/* Metadata */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
               <span>{formatCredits(event.volume_24h)} vol</span>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { Search, SlidersHorizontal, BarChart3 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -66,11 +66,13 @@ export default function HomePage() {
   const pagination = eventsResponse?.pagination
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold sm:text-3xl">Prediction Markets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Prediction Markets
+        </h1>
+        <p className="mt-2 text-muted-foreground">
           Bet on the outcome of real-world events with virtual credits
         </p>
       </div>
@@ -82,7 +84,7 @@ export default function HomePage() {
           setCategory(val)
           setPage(1)
         }}
-        className="mb-4"
+        className="mb-5"
       >
         <TabsList className="flex-wrap">
           <TabsTrigger value="all">All</TabsTrigger>
@@ -105,7 +107,7 @@ export default function HomePage() {
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="pl-9"
+            className="pl-9 bg-card border-border/50 focus-visible:ring-primary/30"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -117,7 +119,7 @@ export default function HomePage() {
               setPage(1)
             }}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[160px] border-border/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -137,13 +139,16 @@ export default function HomePage() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-64 animate-pulse rounded-xl border bg-muted"
+              className="h-64 rounded-xl border border-border/50 bg-card shimmer"
             />
           ))}
         </div>
       ) : events.length === 0 ? (
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
-          No events found. Try adjusting your filters.
+        <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/50">
+          <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
+          <p className="text-muted-foreground">
+            No events found. Try adjusting your filters.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -161,10 +166,11 @@ export default function HomePage() {
             size="sm"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
+            className="border-border/50"
           >
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="px-3 text-sm text-muted-foreground">
             Page {pagination.page} of {pagination.pages}
           </span>
           <Button
@@ -172,6 +178,7 @@ export default function HomePage() {
             size="sm"
             disabled={page >= pagination.pages}
             onClick={() => setPage(page + 1)}
+            className="border-border/50"
           >
             Next
           </Button>

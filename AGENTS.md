@@ -1,47 +1,64 @@
-# Poly-Predict: Project Conventions
+# AGENTS.md
+
+This file provides guidance to AI coding agents when working with code in this repository.
+
+## Shell Quirk
+
+zsh has broken `cd` due to gvm hooks. Always use `bash -c 'cd /path && command'` pattern for Go commands. Writing `go.mod` files directly instead of using `go mod init` from zsh also avoids wrong-directory issues.
 
 ## Architecture
-- Microservices: 4 Go backend services + 2 Next.js frontends
-- Database: Supabase PostgreSQL (prod) / Docker PostgreSQL (dev)
-- Auth: Supabase Auth (user-facing) + custom JWT (admin)
 
-## Go Conventions
-- Go workspace with `go.work` linking `pkg/` and 4 services
-- Shared code in `backend/pkg/` — models, db, config, response helpers
-- Each service has its own `go.mod` and `internal/` package
-- Use `gin-gonic/gin` for HTTP services (api, admin)
-- Use `robfig/cron/v3` for background services (scraper, settler)
-- Use `jackc/pgx/v5` for PostgreSQL
-- Use `rs/zerolog` for structured logging
-- Balance stored as BIGINT (cents): 10,000 credits = 1,000,000
+Microservices: 4 Go backend services + 2 Next.js frontends, all sharing one PostgreSQL database.
 
-## Frontend Conventions
-- Next.js 15 with App Router
-- Tailwind CSS + shadcn/ui components
-- TypeScript strict mode
-- API clients generated from OpenAPI specs
-- SWR for data fetching, Zustand for state management
+- **api** (:8080) — User-facing: events, bets, rankings, profile. Supabase JWT auth.
+- **admin** (:8081) — Admin panel: user/event mgmt, dashboard, force-settle. Custom JWT + bcrypt auth.
+- **scraper** (cron 30m) — Syncs events from Polymarket Gamma/CLOB APIs. No HTTP server.
+- **settler** (cron 5m) — Settles resolved events, distributes credits. No HTTP server.
+- **web** (:3000) — User-facing Next.js frontend with Supabase Auth.
+- **admin-web** (:3001) — Admin Next.js frontend with custom JWT auth.
 
-## Code Style
-- Go: standard `gofmt`, no unused imports
-- TypeScript: ESLint + Prettier defaults
-- SQL migrations: numbered, idempotent where possible
-- Environment variables: loaded via `godotenv`, prefixed by service name
+## Build & Run Commands
 
-## Testing
-- Go: table-driven tests, `testing` package
-- Frontend: Jest + React Testing Library
+```bash
+# Run services in dev mode (from project root)
+make dev-api          # API service :8080
+make dev-admin        # Admin service :8081
+make dev-scraper      # Scraper cron
+make dev-settler      # Settler cron
+make dev-web          # User frontend :3000
+make dev-admin-web    # Admin frontend :3001
+make build-all        # Build all services
+```
+
+### Infrastructure
+
+```bash
+make dev-up        # Start local PostgreSQL + Redis (Docker)
+make dev-down      # Stop
+make migrate-up    # Run all SQL migrations
+make migrate-down  # Reverse all migrations
+```
+
+### Code Generation (from OpenAPI specs)
+
+```bash
+make gen-api            # Go types from api-spec.yaml
+make gen-admin          # Go types from admin-spec.yaml
+make gen-web-client     # TypeScript client for web
+make gen-admin-client   # TypeScript client for admin-web
+```
 
 ## API Spec (Single Source of Truth)
-- OpenAPI specs in `shared/api-spec.yaml` (user API) and `shared/admin-spec.yaml` (admin API) are the **single source of truth** for all API contracts
-- **Before** changing any API endpoint, request/response fields, or route paths, **update the spec first**
-- Backend route registration and response structures **must match** the spec exactly
-- Frontend API calls and type definitions **must match** the spec exactly
-- Do NOT add fields to backend responses or frontend types that are not defined in the spec
-- Do NOT use different route paths than what the spec defines
-- When the spec and code disagree, fix the code to match the spec (or propose a spec change first)
 
-## Error Handling
-- Go services return unified JSON responses via `pkg/response`
-- HTTP errors use standard status codes with error detail body
+OpenAPI specs in `shared/api-spec.yaml` and `shared/admin-spec.yaml` are the **single source of truth** for all API contracts.
+
+- **Before** changing any endpoint, request/response fields, or route paths, **update the spec first**
+- Backend routes and response structures **must match** the spec exactly
+- Frontend API calls and types **must match** the spec exactly
+- When spec and code disagree, fix the code (or propose a spec change first)
+
+## Key Conventions
+
+- Balance stored as BIGINT cents: 10,000 credits = 1,000,000 in DB
+- Environment variables loaded via `godotenv` (see `backend/.env.example`)
 - All database operations use transactions where atomicity is required

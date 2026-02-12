@@ -13,13 +13,14 @@ import {
   Legend,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { apiGet } from '@/lib/api/client'
 
-interface PricePoint {
-  timestamp: string
-  yes_price: number
-  no_price: number
+interface PriceHistoryRecord {
+  id: number
+  event_id: string
+  outcome_label: string
+  price: number
+  recorded_at: string
 }
 
 interface PriceChartProps {
@@ -36,49 +37,63 @@ const PERIODS = [
 
 function formatTime(timestamp: string, period: string): string {
   const date = new Date(timestamp)
-  if (period === '1h' || period === '6h') {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-  if (period === '24h') {
+  if (period === '1h' || period === '6h' || period === '24h') {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
+function groupByTimestamp(records: PriceHistoryRecord[]) {
+  const map = new Map<string, { yes: number; no: number; recorded_at: string }>()
+  for (const r of records) {
+    const key = r.recorded_at
+    const entry = map.get(key) ?? { yes: 0, no: 0, recorded_at: key }
+    if (r.outcome_label === 'Yes') {
+      entry.yes = Math.round(r.price * 100)
+    } else if (r.outcome_label === 'No') {
+      entry.no = Math.round(r.price * 100)
+    }
+    map.set(key, entry)
+  }
+  return Array.from(map.values()).sort(
+    (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+  )
+}
+
 export function PriceChart({ eventId }: PriceChartProps) {
   const [period, setPeriod] = useState('24h')
 
-  const { data: prices, isLoading } = useSWR<PricePoint[]>(
+  const { data: prices, isLoading } = useSWR<PriceHistoryRecord[]>(
     `/api/v1/events/${eventId}/prices?period=${period}`,
-    (url: string) => apiGet<PricePoint[]>(url),
+    (url: string) => apiGet<PriceHistoryRecord[]>(url),
     {
       refreshInterval: 30000,
     }
   )
 
-  const chartData = prices?.map((point) => ({
+  const chartData = groupByTimestamp(prices ?? []).map((point) => ({
     ...point,
-    time: formatTime(point.timestamp, period),
-    yes: Math.round(point.yes_price * 100),
-    no: Math.round(point.no_price * 100),
-  })) || []
+    time: formatTime(point.recorded_at, period),
+  }))
 
   return (
-    <Card>
+    <Card className="border-border/50">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Price History</CardTitle>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5 rounded-lg bg-muted p-0.5">
             {PERIODS.map((p) => (
-              <Button
+              <button
                 key={p.value}
-                variant={period === p.value ? 'default' : 'ghost'}
-                size="sm"
-                className="h-7 px-2 text-xs"
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                  period === p.value
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
                 onClick={() => setPeriod(p.value)}
               >
                 {p.label}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
@@ -95,16 +110,20 @@ export function PriceChart({ eventId }: PriceChartProps) {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border)"
+                strokeOpacity={0.5}
+              />
               <XAxis
                 dataKey="time"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${value}%`}
@@ -112,17 +131,21 @@ export function PriceChart({ eventId }: PriceChartProps) {
               <Tooltip
                 formatter={(value: number) => [`${value}%`]}
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '6px',
+                  backgroundColor: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
                   fontSize: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                 }}
+                labelStyle={{ color: 'var(--muted-foreground)', fontSize: '11px' }}
               />
-              <Legend />
+              <Legend
+                wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
+              />
               <Line
                 type="monotone"
                 dataKey="yes"
-                stroke="#22c55e"
+                stroke="var(--chart-1)"
                 strokeWidth={2}
                 dot={false}
                 name="Yes"
@@ -130,7 +153,7 @@ export function PriceChart({ eventId }: PriceChartProps) {
               <Line
                 type="monotone"
                 dataKey="no"
-                stroke="#ef4444"
+                stroke="var(--chart-2)"
                 strokeWidth={2}
                 dot={false}
                 name="No"

@@ -1,6 +1,18 @@
-# Admin Frontend Conventions
-- Next.js 15 App Router
-- Tailwind CSS + shadcn/ui
+# Admin Frontend AGENTS.md
+
+## Commands
+
+```bash
+bash -c 'cd frontend/admin-web && npm run dev'    # Dev server :3001
+bash -c 'cd frontend/admin-web && npm run build'  # Production build
+bash -c 'cd frontend/admin-web && npm run lint'   # ESLint
+```
+
+## Stack
+
+Next.js 16, React 19, TypeScript strict, Tailwind v4, shadcn/ui, SWR (data fetching), Zustand (state)
+
+## Conventions
+
 - Custom JWT auth (not Supabase)
-- SWR for data fetching
-- Zustand for state management
+- TypeScript: ESLint + Prettier defaults
