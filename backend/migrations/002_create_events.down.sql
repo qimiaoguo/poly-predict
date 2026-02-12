@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS price_history;
+DROP TABLE IF EXISTS events;
+DROP TYPE IF EXISTS event_status;

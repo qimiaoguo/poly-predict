@@ -1,0 +1,788 @@
+openapi: 3.0.3
+info:
+  title: Poly-Predict Admin API
+  description: |
+    Admin service for the Poly-Predict prediction market platform.
+    Provides endpoints for managing users, events, and settlements.
+    All endpoints except login require admin JWT authentication.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: Poly-Predict Team
+
+servers:
+  - url: http://localhost:8081
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Admin authentication
+  - name: Dashboard
+    description: Admin dashboard statistics
+  - name: Users
+    description: User management
+  - name: Events
+    description: Event management
+  - name: Settlements
+    description: Event settlement management
+
+security:
+  - AdminBearerAuth: []
+
+components:
+  securitySchemes:
+    AdminBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Custom admin JWT token obtained from the login endpoint
+
+  schemas:
+    # ---------- Reused schemas (same as api-spec) ----------
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        polymarket_event_id:
+          type: string
+        slug:
+          type: string
+        question:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        outcomes:
+          type: array
+          items:
+            type: string
+          example: ["Yes", "No"]
+        outcome_prices:
+          type: array
+          items:
+            type: number
+            format: double
+          example: [0.65, 0.35]
+        status:
+          type: string
+          enum: [open, closed, resolved]
+        resolved_outcome:
+          type: string
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        volume:
+          type: number
+          format: double
+        volume_24h:
+          type: number
+          format: double
+        liquidity:
+          type: number
+          format: double
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - polymarket_event_id
+        - slug
+        - question
+        - category
+        - outcomes
+        - outcome_prices
+        - status
+        - volume
+        - volume_24h
+        - liquidity
+        - created_at
+        - updated_at
+
+    Bet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          enum: ["yes", "no"]
+        amount:
+          type: integer
+          description: Bet amount in credits
+        locked_odds:
+          type: number
+          format: double
+          description: Odds at the time the bet was placed
+        potential_payout:
+          type: integer
+          description: Potential payout in credits
+        status:
+          type: string
+          enum: [pending, won, lost, cancelled]
+        payout:
+          type: integer
+          nullable: true
+          description: Actual payout after settlement
+        settled_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - event_id
+        - outcome
+        - amount
+        - locked_odds
+        - potential_payout
+        - status
+        - created_at
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        balance:
+          type: integer
+          description: Available credit balance
+        frozen_balance:
+          type: integer
+          description: Credits locked in active bets
+        level:
+          type: integer
+        xp:
+          type: integer
+        current_streak:
+          type: integer
+        max_streak:
+          type: integer
+        total_bets:
+          type: integer
+        total_wins:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - display_name
+        - balance
+        - frozen_balance
+        - level
+        - xp
+        - current_streak
+        - max_streak
+        - total_bets
+        - total_wins
+        - created_at
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of items across all pages
+        page:
+          type: integer
+          description: Current page number
+        page_size:
+          type: integer
+          description: Number of items per page
+        pages:
+          type: integer
+          description: Total number of pages
+      required:
+        - total
+        - page
+        - page_size
+        - pages
+
+    # ---------- Admin-specific schemas ----------
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          description: "Admin role (e.g. super_admin, moderator)"
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - role
+        - created_at
+
+    Settlement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        resolved_outcome:
+          type: string
+        total_bets:
+          type: integer
+          description: Number of bets settled
+        total_payouts:
+          type: integer
+          description: Total credits paid out
+        settled_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - event_id
+        - resolved_outcome
+        - total_bets
+        - total_payouts
+        - settled_at
+
+    DashboardStats:
+      type: object
+      properties:
+        total_users:
+          type: integer
+        total_bets:
+          type: integer
+        active_events:
+          type: integer
+        total_volume:
+          type: number
+          format: double
+        recent_bets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bet"
+      required:
+        - total_users
+        - total_bets
+        - active_events
+        - total_volume
+        - recent_bets
+
+    # ---------- Request schemas ----------
+
+    AdminLoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      required:
+        - email
+        - password
+
+    AdminLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Admin JWT token
+        admin:
+          $ref: "#/components/schemas/AdminUser"
+      required:
+        - token
+        - admin
+
+    PatchUserRequest:
+      type: object
+      properties:
+        balance_adjustment:
+          type: integer
+          description: Amount to add (positive) or subtract (negative) from the user's balance
+        banned:
+          type: boolean
+          description: Whether the user should be banned
+      minProperties: 1
+
+    PatchEventRequest:
+      type: object
+      properties:
+        category:
+          type: string
+        status:
+          type: string
+          enum: [open, closed, resolved]
+      minProperties: 1
+
+    SettleEventRequest:
+      type: object
+      properties:
+        outcome:
+          type: string
+          description: The winning outcome label
+      required:
+        - outcome
+
+    # ---------- Response wrappers ----------
+
+    PaginatedUserResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
+
+    PaginatedEventResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
+
+    PaginatedSettlementResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Settlement"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
+
+    UserDetailResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        recent_bets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bet"
+      required:
+        - user
+        - recent_bets
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+            - message
+      required:
+        - success
+        - error
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid admin authentication token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Authentication required"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Insufficient permissions"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Resource not found"
+
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Invalid request parameters"
+
+    UnprocessableEntity:
+      description: Validation or business logic error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Event has already been settled"
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number
+
+    PageSizeParam:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+
+paths:
+  /api/v1/auth/login:
+    post:
+      operationId: adminLogin
+      summary: Admin login
+      description: Authenticates an admin user and returns a JWT token.
+      tags:
+        - Auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  message: "Invalid email or password"
+
+  /api/v1/dashboard:
+    get:
+      operationId: getDashboardStats
+      summary: Get dashboard statistics
+      description: Returns aggregate platform statistics and a list of recent bets.
+      tags:
+        - Dashboard
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/users:
+    get:
+      operationId: listUsers
+      summary: List users
+      description: Returns a paginated list of platform users. Supports search and sorting.
+      tags:
+        - Users
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by display name or ID
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, balance, total_bets, total_wins]
+            default: created_at
+          description: Field to sort results by
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/users/{id}:
+    get:
+      operationId: getUserDetail
+      summary: Get user detail
+      description: Returns a user's full profile along with their recent bets.
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      responses:
+        "200":
+          description: User detail with recent bets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: patchUser
+      summary: Update user
+      description: Adjusts a user's balance or bans/unbans them.
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/events:
+    get:
+      operationId: listEvents
+      summary: List events
+      description: Returns a paginated list of events for admin management.
+      tags:
+        - Events
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, resolved]
+          description: Filter by event status
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category name
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search across question and description
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedEventResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/events/{id}:
+    patch:
+      operationId: patchEvent
+      summary: Update event
+      description: Updates an event's category or status.
+      tags:
+        - Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchEventRequest"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/events/{id}/settle:
+    post:
+      operationId: settleEvent
+      summary: Settle an event
+      description: Resolves an event with the given outcome and settles all associated bets. Winning bets receive payouts and losing bets are marked as lost.
+      tags:
+        - Settlements
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettleEventRequest"
+      responses:
+        "200":
+          description: Settlement result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settlement"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /api/v1/settlements:
+    get:
+      operationId: listSettlements
+      summary: List settlements
+      description: Returns a paginated list of all event settlements.
+      tags:
+        - Settlements
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of settlements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedSettlementResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"

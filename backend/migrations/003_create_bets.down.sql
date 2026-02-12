@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS rankings;
+DROP TABLE IF EXISTS credit_transactions;
+DROP TABLE IF EXISTS settlements;
+DROP TABLE IF EXISTS bets;
+DROP TYPE IF EXISTS bet_status;

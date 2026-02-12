@@ -1,0 +1,841 @@
+openapi: 3.0.3
+info:
+  title: Poly-Predict API
+  description: |
+    User-facing API for the Poly-Predict prediction market platform.
+    Provides endpoints for browsing events, placing bets, managing user
+    profiles, and viewing rankings/leaderboards.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: Poly-Predict Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Events
+    description: Browse and search prediction market events (public)
+  - name: Bets
+    description: Place and manage bets (authentication required)
+  - name: Profile
+    description: User profile and transaction history (authentication required)
+  - name: Rankings
+    description: Leaderboard and rankings (public)
+
+security: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT Bearer token
+
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        polymarket_event_id:
+          type: string
+        slug:
+          type: string
+        question:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        outcomes:
+          type: array
+          items:
+            type: string
+          example: ["Yes", "No"]
+        outcome_prices:
+          type: array
+          items:
+            type: number
+            format: double
+          example: [0.65, 0.35]
+        status:
+          type: string
+          enum: [open, closed, resolved]
+        resolved_outcome:
+          type: string
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        volume:
+          type: number
+          format: double
+        volume_24h:
+          type: number
+          format: double
+        liquidity:
+          type: number
+          format: double
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - polymarket_event_id
+        - slug
+        - question
+        - category
+        - outcomes
+        - outcome_prices
+        - status
+        - volume
+        - volume_24h
+        - liquidity
+        - created_at
+        - updated_at
+
+    PriceHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        outcome_label:
+          type: string
+        price:
+          type: number
+          format: double
+        recorded_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - event_id
+        - outcome_label
+        - price
+        - recorded_at
+
+    Bet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          enum: ["yes", "no"]
+        amount:
+          type: integer
+          description: Bet amount in credits
+        locked_odds:
+          type: number
+          format: double
+          description: Odds at the time the bet was placed
+        potential_payout:
+          type: integer
+          description: Potential payout in credits
+        status:
+          type: string
+          enum: [pending, won, lost, cancelled]
+        payout:
+          type: integer
+          nullable: true
+          description: Actual payout after settlement
+        settled_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - event_id
+        - outcome
+        - amount
+        - locked_odds
+        - potential_payout
+        - status
+        - created_at
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        balance:
+          type: integer
+          description: Available credit balance
+        frozen_balance:
+          type: integer
+          description: Credits locked in active bets
+        level:
+          type: integer
+        xp:
+          type: integer
+        current_streak:
+          type: integer
+        max_streak:
+          type: integer
+        total_bets:
+          type: integer
+        total_wins:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - display_name
+        - balance
+        - frozen_balance
+        - level
+        - xp
+        - current_streak
+        - max_streak
+        - total_bets
+        - total_wins
+        - created_at
+
+    CreditTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          description: "Transaction type (e.g. bet_placed, bet_won, daily_bonus, signup_bonus)"
+        amount:
+          type: integer
+          description: Positive for credits received, negative for credits spent
+        balance_after:
+          type: integer
+          description: User balance after this transaction
+        reference_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Related entity ID (e.g. bet_id)
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - type
+        - amount
+        - balance_after
+        - description
+        - created_at
+
+    Ranking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        period:
+          type: string
+          enum: [all_time, weekly, monthly]
+        category:
+          type: string
+          nullable: true
+          description: Category filter, or null for overall ranking
+        total_assets:
+          type: integer
+          description: Balance plus frozen balance
+        total_profit:
+          type: integer
+        win_count:
+          type: integer
+        loss_count:
+          type: integer
+        win_rate:
+          type: number
+          format: double
+          description: Win rate as a decimal (0.0 to 1.0)
+        roi:
+          type: number
+          format: double
+          description: Return on investment as a decimal
+        consecutive_wins:
+          type: integer
+        rank_position:
+          type: integer
+        calculated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - display_name
+        - period
+        - total_assets
+        - total_profit
+        - win_count
+        - loss_count
+        - win_rate
+        - roi
+        - consecutive_wins
+        - rank_position
+        - calculated_at
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of items across all pages
+        page:
+          type: integer
+          description: Current page number
+        page_size:
+          type: integer
+          description: Number of items per page
+        pages:
+          type: integer
+          description: Total number of pages
+      required:
+        - total
+        - page
+        - page_size
+        - pages
+
+    PaginatedEventResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
+
+    PaginatedBetResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bet"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
+
+    PaginatedCreditTransactionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreditTransaction"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
+
+    PaginatedRankingResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ranking"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+        - data
+        - pagination
+
+    CategoryCount:
+      type: object
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+      required:
+        - name
+        - count
+
+    PlaceBetRequest:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          enum: ["yes", "no"]
+        amount:
+          type: integer
+          minimum: 1
+          description: Bet amount in credits
+      required:
+        - event_id
+        - outcome
+        - amount
+
+    UpdateDisplayNameRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+        - display_name
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+            - message
+      required:
+        - success
+        - error
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Authentication required"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Resource not found"
+
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Invalid request parameters"
+
+    UnprocessableEntity:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              message: "Insufficient balance"
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number
+
+    PageSizeParam:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+
+paths:
+  /api/v1/events:
+    get:
+      operationId: listEvents
+      summary: List events
+      description: Returns a paginated list of prediction market events. Supports filtering by status, category, and free-text search.
+      tags:
+        - Events
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, resolved]
+          description: Filter by event status
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category name
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Free-text search across question and description
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [volume_24h, liquidity, end_date]
+            default: volume_24h
+          description: Field to sort results by
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedEventResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/events/{id}:
+    get:
+      operationId: getEvent
+      summary: Get event detail
+      description: Returns a single event by its ID.
+      tags:
+        - Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      responses:
+        "200":
+          description: Event detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/events/{id}/prices:
+    get:
+      operationId: getEventPriceHistory
+      summary: Get event price history
+      description: Returns price history for all outcomes of an event over a given time period.
+      tags:
+        - Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 24h
+          description: Time period for price history
+      responses:
+        "200":
+          description: Array of price history records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriceHistory"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/categories:
+    get:
+      operationId: listCategories
+      summary: List categories
+      description: Returns all distinct event categories with the count of events in each.
+      tags:
+        - Events
+      responses:
+        "200":
+          description: Array of categories with counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryCount"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/bets:
+    post:
+      operationId: placeBet
+      summary: Place a bet
+      description: Places a new bet on an event outcome. Deducts the bet amount from the user's balance.
+      tags:
+        - Bets
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceBetRequest"
+      responses:
+        "201":
+          description: Bet placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bet"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    get:
+      operationId: listUserBets
+      summary: List user's bets
+      description: Returns a paginated list of the authenticated user's bets.
+      tags:
+        - Bets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, won, lost, cancelled]
+          description: Filter by bet status
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of bets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedBetResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/bets/{id}:
+    get:
+      operationId: getBet
+      summary: Get bet detail
+      description: Returns a single bet by its ID. Only accessible to the bet owner.
+      tags:
+        - Bets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Bet ID
+      responses:
+        "200":
+          description: Bet detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bet"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/users/me:
+    get:
+      operationId: getProfile
+      summary: Get user profile
+      description: Returns the authenticated user's profile, including stats and balances.
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      operationId: updateProfile
+      summary: Update display name
+      description: Updates the authenticated user's display name.
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDisplayNameRequest"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/users/me/transactions:
+    get:
+      operationId: listTransactions
+      summary: List credit transactions
+      description: Returns a paginated list of the authenticated user's credit transactions.
+      tags:
+        - Profile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated list of credit transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedCreditTransactionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/rankings:
+    get:
+      operationId: listRankings
+      summary: Get leaderboard
+      description: Returns a paginated leaderboard ranked by the specified metric and period.
+      tags:
+        - Rankings
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [all_time, weekly, monthly]
+            default: all_time
+          description: Ranking time period
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter rankings by event category
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [total_profit, win_rate, roi]
+            default: total_profit
+          description: Metric to rank by
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Paginated leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedRankingResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
