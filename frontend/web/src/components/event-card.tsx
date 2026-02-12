@@ -11,8 +11,7 @@ interface Event {
   question: string
   category: string
   status: 'open' | 'closed' | 'resolved'
-  yes_price: number
-  no_price: number
+  outcome_prices: string[]
   volume_24h: number
   end_date: string
 }
@@ -39,8 +38,8 @@ function formatCredits(amount: number): string {
 }
 
 export function EventCard({ event }: EventCardProps) {
-  const yesPercent = Math.round(event.yes_price * 100)
-  const noPercent = Math.round(event.no_price * 100)
+  const yesPercent = Math.round(parseFloat(event.outcome_prices?.[0] ?? '0') * 100)
+  const noPercent = Math.round(parseFloat(event.outcome_prices?.[1] ?? '0') * 100)
 
   return (
     <Link href={`/events/${event.id}`}>

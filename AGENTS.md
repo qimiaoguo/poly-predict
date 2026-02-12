@@ -32,6 +32,15 @@
 - Go: table-driven tests, `testing` package
 - Frontend: Jest + React Testing Library
 
+## API Spec (Single Source of Truth)
+- OpenAPI specs in `shared/api-spec.yaml` (user API) and `shared/admin-spec.yaml` (admin API) are the **single source of truth** for all API contracts
+- **Before** changing any API endpoint, request/response fields, or route paths, **update the spec first**
+- Backend route registration and response structures **must match** the spec exactly
+- Frontend API calls and type definitions **must match** the spec exactly
+- Do NOT add fields to backend responses or frontend types that are not defined in the spec
+- Do NOT use different route paths than what the spec defines
+- When the spec and code disagree, fix the code to match the spec (or propose a spec change first)
+
 ## Error Handling
 - Go services return unified JSON responses via `pkg/response`
 - HTTP errors use standard status codes with error detail body

@@ -21,8 +21,7 @@ interface Event {
   question: string
   category: string
   status: 'open' | 'closed' | 'resolved'
-  yes_price: number
-  no_price: number
+  outcome_prices: string[]
   volume_24h: number
   end_date: string
 }

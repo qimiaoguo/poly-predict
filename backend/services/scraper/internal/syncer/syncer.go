@@ -131,9 +131,9 @@ func (s *Syncer) upsertMarket(ctx context.Context, m polymarket.GammaMarket) (bo
 	}
 
 	// Parse numeric fields.
-	volume, _ := strconv.ParseFloat(m.Volume, 64)
-	volume24h, _ := strconv.ParseFloat(m.Volume24hr, 64)
-	liquidity, _ := strconv.ParseFloat(m.Liquidity, 64)
+	volume, _ := strconv.ParseFloat(m.Volume.String(), 64)
+	volume24h, _ := strconv.ParseFloat(m.Volume24hr.String(), 64)
+	liquidity, _ := strconv.ParseFloat(m.Liquidity.String(), 64)
 
 	// Parse end date.
 	var endDate *time.Time

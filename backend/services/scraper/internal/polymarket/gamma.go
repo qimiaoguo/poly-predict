@@ -18,25 +18,64 @@ const (
 	gammaReqTimeout  = 30 * time.Second
 )
 
+// stringSlice is a []string that can unmarshal from a JSON-encoded string
+// (e.g. "[\"Yes\",\"No\"]") or a regular JSON array.
+type stringSlice []string
+
+func (s *stringSlice) UnmarshalJSON(data []byte) error {
+	// Try normal array first.
+	var arr []string
+	if err := json.Unmarshal(data, &arr); err == nil {
+		*s = arr
+		return nil
+	}
+	// Otherwise it's a JSON string wrapping an array.
+	var raw string
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(raw), (*[]string)(s))
+}
+
+// flexString accepts both JSON strings and numbers, storing the value as a string.
+type flexString string
+
+func (f *flexString) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*f = flexString(s)
+		return nil
+	}
+	var n json.Number
+	if err := json.Unmarshal(data, &n); err == nil {
+		*f = flexString(n.String())
+		return nil
+	}
+	*f = ""
+	return nil
+}
+
+func (f flexString) String() string { return string(f) }
+
 // GammaMarket represents a market from the Gamma API response.
 type GammaMarket struct {
-	ID             string   `json:"id"`
-	Question       string   `json:"question"`
-	Slug           string   `json:"slug"`
-	Description    string   `json:"description"`
-	Category       string   `json:"category"`
-	Image          string   `json:"image"`
-	Outcomes       []string `json:"outcomes"`
-	OutcomePrices  []string `json:"outcomePrices"`
-	ClobTokenIDs   []string `json:"clobTokenIds"`
-	Volume         string   `json:"volume"`
-	Volume24hr     string   `json:"volume24hr"`
-	Liquidity      string   `json:"liquidity"`
-	EndDate        string   `json:"endDate"`
-	Closed         bool     `json:"closed"`
-	ConditionID    string   `json:"conditionId"`
-	EventID        string   `json:"eventId"`
-	Active         bool     `json:"active"`
+	ID             string      `json:"id"`
+	Question       string      `json:"question"`
+	Slug           string      `json:"slug"`
+	Description    string      `json:"description"`
+	Category       string      `json:"category"`
+	Image          string      `json:"image"`
+	Outcomes       stringSlice `json:"outcomes"`
+	OutcomePrices  stringSlice `json:"outcomePrices"`
+	ClobTokenIDs   stringSlice `json:"clobTokenIds"`
+	Volume         flexString  `json:"volume"`
+	Volume24hr     flexString  `json:"volume24hr"`
+	Liquidity      flexString  `json:"liquidity"`
+	EndDate        string      `json:"endDate"`
+	Closed         bool        `json:"closed"`
+	ConditionID    string      `json:"conditionId"`
+	EventID        string      `json:"eventId"`
+	Active         bool        `json:"active"`
 }
 
 // GammaClient is an HTTP client for the Polymarket Gamma API.

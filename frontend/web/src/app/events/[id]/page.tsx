@@ -19,10 +19,9 @@ interface EventDetail {
   description: string
   category: string
   status: 'open' | 'closed' | 'resolved'
-  yes_price: number
-  no_price: number
+  outcome_prices: string[]
   volume_24h: number
-  total_volume: number
+  volume: number
   end_date: string
   created_at: string
   resolved_outcome?: string
@@ -144,7 +143,7 @@ export default function EventDetailPage({
                     Total Volume
                   </div>
                   <p className="text-sm font-semibold">
-                    {formatCredits(event.total_volume)} credits
+                    {formatCredits(event.volume)} credits
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -177,8 +176,8 @@ export default function EventDetailPage({
         <div className="lg:sticky lg:top-20 lg:self-start">
           <BetPanel
             eventId={id}
-            yesPrice={event.yes_price}
-            noPrice={event.no_price}
+            yesPrice={parseFloat(event.outcome_prices?.[0] ?? '0')}
+            noPrice={parseFloat(event.outcome_prices?.[1] ?? '0')}
             status={event.status}
           />
         </div>

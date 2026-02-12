@@ -14,13 +14,13 @@ dev-down: ## Stop local services
 migrate-up: ## Run all migrations up
 	@for f in backend/migrations/*.up.sql; do \
 		echo "Running $$f..."; \
-		PGPASSWORD=polypredict psql -h localhost -U polypredict -d polypredict -f $$f; \
+		docker exec -i poly-predict-postgres-1 psql -U polypredict -d polypredict < $$f; \
 	done
 
 migrate-down: ## Run all migrations down (reverse order)
 	@for f in $$(ls -r backend/migrations/*.down.sql); do \
 		echo "Running $$f..."; \
-		PGPASSWORD=polypredict psql -h localhost -U polypredict -d polypredict -f $$f; \
+		docker exec -i poly-predict-postgres-1 psql -U polypredict -d polypredict < $$f; \
 	done
 
 # Backend services

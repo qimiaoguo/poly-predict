@@ -63,7 +63,7 @@ func main() {
 	rankingHandler := handler.NewRankingHandler(rankingService)
 
 	// Auth middleware.
-	authMiddleware := auth.NewMiddleware(cfg.SupabaseJWTSecret)
+	authMiddleware := auth.NewMiddleware(cfg.SupabaseJWTSecret, cfg.SupabaseURL)
 
 	// Set up Gin router.
 	router := gin.Default()
@@ -93,8 +93,9 @@ func main() {
 		events.GET("", eventHandler.ListEvents)
 		events.GET("/:id", eventHandler.GetEvent)
 		events.GET("/:id/price-history", eventHandler.GetPriceHistory)
-		events.GET("/categories", eventHandler.GetCategories)
 	}
+
+	api.GET("/categories", eventHandler.GetCategories)
 
 	rankings := api.Group("/rankings")
 	{

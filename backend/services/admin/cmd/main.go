@@ -97,8 +97,8 @@ func main() {
 	})
 
 	// Public routes.
-	api := router.Group("/api/admin")
-	api.POST("/login", authHandler.Login)
+	api := router.Group("/api/v1")
+	api.POST("/auth/login", authHandler.Login)
 
 	// Protected routes.
 	protected := api.Group("")
